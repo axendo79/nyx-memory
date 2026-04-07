@@ -4,6 +4,7 @@ clean_memory.py — one-time cleanup of the memory store.
 Removes entries where:
   - text contains "[Error:"
   - text is under 20 characters
+  - user_input portion starts with a shell command prefix
 
 Creates a timestamped backup before writing the cleaned result.
 """
@@ -50,12 +51,21 @@ def main():
     shutil.copy2(MEMORY_PATH, bak_path)
     print(f"Backup saved: {bak_path}")
 
+    _COMMAND_PREFIXES = (".venv", "python", "cd ", "dir ", "git ")
+
+    def is_clean(m: dict) -> bool:
+        text = m.get("text", "")
+        if "[Error:" in text or len(text) < 20:
+            return False
+        # Extract the user_input portion: "User said: <input> | Nyx responded: ..."
+        if text.startswith("User said: "):
+            user_part = text[len("User said: "):].split(" | Nyx responded:")[0].lstrip()
+            if user_part.startswith(_COMMAND_PREFIXES):
+                return False
+        return True
+
     before = len(memories)
-    cleaned = [
-        m for m in memories
-        if "[Error:" not in m.get("text", "")
-        and len(m.get("text", "")) >= 20
-    ]
+    cleaned = [m for m in memories if is_clean(m)]
     removed = before - len(cleaned)
 
     if removed == 0:
