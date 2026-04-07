@@ -25,8 +25,19 @@ def build_prompt(user_input: str, memories: list) -> str:
     return f"User: {user_input}"
 
 
+def handle_debug(query: str, memories: list) -> None:
+    results = retrieve_relevant(query, memories, top_n=5, min_score=MIN_SCORE)
+    if not results:
+        print(f"\n[debug] No memories found for: {query!r}\n")
+        return
+    print(f"\n[debug] Top {len(results)} memories for: {query!r}")
+    for i, m in enumerate(results, 1):
+        print(f"  {i}. [score: {m['score']:.2f}] {m['text']}")
+    print()
+
+
 def run():
-    print("Nyx is running. Type 'exit' to quit.\n")
+    print("Nyx is running. Type 'exit' to quit, '/debug <query>' to inspect memory.\n")
     memories = load_memories(MEMORY_PATH)
 
     while True:
@@ -36,6 +47,10 @@ def run():
         if user_input.lower() == "exit":
             print("Nyx stopped.")
             break
+
+        if user_input.startswith("/debug "):
+            handle_debug(user_input[7:].strip(), memories)
+            continue
 
         # Retrieve top 3 relevant memories above score threshold
         relevant = retrieve_relevant(user_input, memories, top_n=3, min_score=MIN_SCORE)
