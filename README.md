@@ -77,3 +77,10 @@ Each memory entry:
 - `.env` is gitignored — never commit secrets
 - `data/memory.json` is gitignored — memory stays local
 - LM Studio endpoint is localhost only — never expose externally
+
+## Roadmap
+
+- **Robust retrieval** — replace keyword overlap with embedding-based semantic search so memories surface by meaning, not just shared words
+- **Tunable decay rates** — per-entry and global decay controls, configurable via `.env`, allowing fine-grained control over how quickly memories fade
+- **Voice / avatar hooks** — plugin points for TTS output and a visual avatar layer, so Nyx can speak responses and present a face tied to its memory state
+- **Personality emergence** — track which topics and tones are most reinforced over time, and let those patterns shape Nyx's default voice and response style organically
