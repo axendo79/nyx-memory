@@ -31,7 +31,7 @@ def query_llm(prompt: str) -> str:
         response = requests.post(
             LM_STUDIO_URL,
             json=payload,
-            timeout=60,
+            timeout=120,
             # No external calls — localhost only
             headers={"Content-Type": "application/json"},
         )
