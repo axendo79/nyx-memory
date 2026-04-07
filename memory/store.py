@@ -122,6 +122,11 @@ def add_memory(memories: List[Dict], user_input: str, response: str) -> List[Dic
         log.warning("add event=skip_error_response input_len=%d", len(user_input))
         return memories
 
+    _COMMAND_PREFIXES = (".venv", "python", "cd ", "dir ", "git ")
+    if user_input.lstrip().startswith(_COMMAND_PREFIXES):
+        log.info("add event=skip_command_input input=%.40r", user_input)
+        return memories
+
     clean_input = sanitize(user_input)
     clean_response = sanitize(response[:200])
     entry = {
