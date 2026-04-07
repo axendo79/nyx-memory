@@ -2,7 +2,7 @@
 cd /d "%~dp0"
 
 echo Starting Nyx Watcher...
-start "Nyx Watcher" .venv\Scripts\python.exe watcher.py
+start "Nyx Watcher" cmd /k ".venv\Scripts\python.exe watcher.py"
 
 echo Starting Nyx...
 echo.
