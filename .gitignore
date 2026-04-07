@@ -3,6 +3,11 @@
 
 # Memory data — personal, keep local
 data/memory.json
+data/memory.json.bak
+data/memory.json.tmp
+
+# Logs — local only
+logs/
 
 # Python
 __pycache__/

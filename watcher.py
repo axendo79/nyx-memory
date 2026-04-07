@@ -13,24 +13,28 @@ from watchdog.events import FileSystemEventHandler
 
 from llm.client import query_llm
 from memory.store import load_memories, save_memories, add_memory
+from nyx_logger import get_logger
 
 load_dotenv()
 
 INBOX_PATH = os.getenv("INBOX_PATH", r"D:\Nyx\Inbox")
 MEMORY_PATH = os.path.join(os.path.dirname(__file__), "data", "memory.json")
 
-# File extensions treated as readable text
 TEXT_EXTENSIONS = {
     ".txt", ".md", ".csv", ".log", ".json", ".yaml", ".yml",
     ".toml", ".ini", ".cfg", ".py", ".js", ".ts", ".html", ".xml",
 }
 
+# Console logger for interactive feedback
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [watcher] %(message)s",
     datefmt="%H:%M:%S",
 )
-log = logging.getLogger(__name__)
+console = logging.getLogger("watcher.console")
+
+# Structured file logger
+log = get_logger("watcher")
 
 
 def extract_text(filepath: str) -> str | None:
@@ -40,7 +44,8 @@ def extract_text(filepath: str) -> str | None:
     """
     _, ext = os.path.splitext(filepath)
     if ext.lower() not in TEXT_EXTENSIONS:
-        log.info("Skipping non-text file: %s", os.path.basename(filepath))
+        console.info("Skipping non-text file: %s", os.path.basename(filepath))
+        log.info("ingest event=skip_binary path=%s ext=%s", os.path.basename(filepath), ext)
         return None
 
     try:
@@ -48,18 +53,21 @@ def extract_text(filepath: str) -> str | None:
             content = f.read(4000)
         return content.strip() or None
     except OSError as e:
-        log.warning("Could not read %s: %s", filepath, e)
+        console.warning("Could not read %s: %s", filepath, e)
+        log.warning("ingest event=read_error path=%s error=%s", filepath, e)
         return None
 
 
 def summarize_and_store(filepath: str) -> None:
     """Extract text, send to LLM for summarization, store in memory."""
     filename = os.path.basename(filepath)
-    log.info("New file detected: %s", filename)
+    console.info("New file detected: %s", filename)
+    log.info("ingest event=file_detected path=%s", filename)
 
     text = extract_text(filepath)
     if not text:
-        log.info("No readable content in %s — skipping.", filename)
+        console.info("No readable content in %s — skipping.", filename)
+        log.info("ingest event=empty_content path=%s", filename)
         return
 
     prompt = (
@@ -67,26 +75,26 @@ def summarize_and_store(filepath: str) -> None:
         f"Be concise. File: {filename}\n\n{text}"
     )
 
-    log.info("Sending to LLM for summarization...")
+    console.info("Sending to LLM for summarization...")
     summary = query_llm(prompt)
-    log.info("Summary: %s", summary)
+    console.info("Summary: %s", summary)
+    log.info("ingest event=summarized path=%s summary_len=%d", filename, len(summary))
 
     memories = load_memories(MEMORY_PATH)
     memories = add_memory(memories, f"[Inbox file: {filename}]", summary)
     save_memories(MEMORY_PATH, memories)
-    log.info("Stored in memory.")
+    console.info("Stored in memory.")
+    log.info("ingest event=stored path=%s total_memories=%d", filename, len(memories))
 
 
 class InboxHandler(FileSystemEventHandler):
     def on_created(self, event):
         if event.is_directory:
             return
-        # Brief delay to let the file finish writing before reading
         time.sleep(0.5)
         summarize_and_store(event.src_path)
 
     def on_moved(self, event):
-        # Also catch files moved/copied into the inbox
         if event.is_directory:
             return
         time.sleep(0.5)
@@ -95,11 +103,13 @@ class InboxHandler(FileSystemEventHandler):
 
 def run():
     if not os.path.isdir(INBOX_PATH):
-        log.error("INBOX_PATH does not exist: %s", INBOX_PATH)
+        console.error("INBOX_PATH does not exist: %s", INBOX_PATH)
+        log.error("ingest event=startup_failed reason=inbox_missing path=%s", INBOX_PATH)
         sys.exit(1)
 
-    log.info("Watching inbox: %s", INBOX_PATH)
-    log.info("Press Ctrl+C to stop.\n")
+    console.info("Watching inbox: %s", INBOX_PATH)
+    console.info("Press Ctrl+C to stop.\n")
+    log.info("ingest event=startup inbox=%s", INBOX_PATH)
 
     handler = InboxHandler()
     observer = Observer()
@@ -110,7 +120,8 @@ def run():
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        log.info("Stopping watcher.")
+        console.info("Stopping watcher.")
+        log.info("ingest event=shutdown")
         observer.stop()
 
     observer.join()

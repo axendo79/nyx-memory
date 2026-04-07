@@ -4,7 +4,11 @@ Simple and fast for V1. Embedding-based retrieval is a future upgrade.
 """
 
 from typing import List, Dict
+
 from memory.store import boost_score
+from nyx_logger import get_logger
+
+log = get_logger("retrieve")
 
 
 def retrieve_relevant(
@@ -30,17 +34,20 @@ def retrieve_relevant(
         overlap = query_words & memory_words
 
         if overlap:
-            # Weight by keyword overlap + existing score
             relevance = len(overlap) * memory["score"]
             scored.append((relevance, memory))
 
-    # Sort by relevance descending
     scored.sort(key=lambda x: x[0], reverse=True)
 
-    # Boost scores of retrieved memories and return top N
     results = []
     for _, memory in scored[:top_n]:
         memory = boost_score(memory)
         results.append(memory)
+
+    top_score = results[0]["score"] if results else 0.0
+    log.info(
+        "retrieve event=retrieve_relevant query_len=%d candidates=%d results=%d top_score=%.2f",
+        len(query_words), len(memories), len(results), top_score,
+    )
 
     return results
