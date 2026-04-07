@@ -18,7 +18,7 @@ from nyx_logger import get_logger
 load_dotenv()
 
 INBOX_PATH = os.getenv("INBOX_PATH", r"D:\Nyx\Inbox")
-MEMORY_PATH = os.path.join(os.path.dirname(__file__), "data", "memory.json")
+MEMORY_PATH = os.getenv("MEMORY_PATH", os.path.join(os.path.dirname(__file__), "data", "memory.json"))
 
 TEXT_EXTENSIONS = {
     ".txt", ".md", ".csv", ".log", ".json", ".yaml", ".yml",

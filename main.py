@@ -11,7 +11,7 @@ from memory.retrieve import retrieve_relevant
 
 load_dotenv()
 
-MEMORY_PATH = os.path.join(os.path.dirname(__file__), "data", "memory.json")
+MEMORY_PATH = os.getenv("MEMORY_PATH", os.path.join(os.path.dirname(__file__), "data", "memory.json"))
 MIN_SCORE = float(os.getenv("MIN_SCORE", 0.3))
 
 
