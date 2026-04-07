@@ -116,7 +116,12 @@ def add_memory(memories: List[Dict], user_input: str, response: str) -> List[Dic
     """
     Add a new memory entry. Sanitizes both input and response before storing.
     Score starts at 1.0 and decays over time if not retrieved.
+    Skips storing if the response indicates an LLM error.
     """
+    if "[Error:" in response:
+        log.warning("add event=skip_error_response input_len=%d", len(user_input))
+        return memories
+
     clean_input = sanitize(user_input)
     clean_response = sanitize(response[:200])
     entry = {
