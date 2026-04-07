@@ -7,7 +7,7 @@ Open LM Studio, load your model, and apply these settings before starting Nyx:
 | Setting | Value |
 |---|---|
 | Context Length | 1024 |
-| GPU Offload | 32 |
+| GPU Offload | 20 |
 | Evaluation Batch Size | 256 |
 | JIT Model Loading | Off |
 
