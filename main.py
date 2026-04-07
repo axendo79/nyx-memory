@@ -17,7 +17,7 @@ MIN_SCORE = float(os.getenv("MIN_SCORE", 0.3))
 
 def build_prompt(user_input: str, memories: list) -> str:
     if memories:
-        memory_block = "\n".join(f"- {m['text']}" for m in memories)
+        memory_block = "\n".join(f"- {m['text'][:100]}" for m in memories)
         return (
             f"Relevant context from memory:\n{memory_block}\n\n"
             f"User: {user_input}"
@@ -37,8 +37,8 @@ def run():
             print("Nyx stopped.")
             break
 
-        # Retrieve relevant memories above score threshold
-        relevant = retrieve_relevant(user_input, memories, min_score=MIN_SCORE)
+        # Retrieve top 3 relevant memories above score threshold
+        relevant = retrieve_relevant(user_input, memories, top_n=3, min_score=MIN_SCORE)
 
         # Build prompt with injected memory context
         prompt = build_prompt(user_input, relevant)
