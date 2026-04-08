@@ -36,11 +36,31 @@ def retrieve_relevant(
             continue
 
         memory_words = tokenize(memory["text"])
-        overlap = query_words & memory_words
 
-        if overlap:
-            relevance = len(overlap) * memory["score"]
-            scored.append((relevance, memory))
+        # Exact matches
+        exact = query_words & memory_words
+
+        # Partial matches — query word is substring of memory word or vice versa
+        partial = set()
+        for qw in query_words:
+            if qw not in exact and len(qw) >= 3:
+                for mw in memory_words:
+                    if len(mw) >= 3 and (qw in mw or mw in qw):
+                        partial.add(qw)
+                        break
+
+        matched = exact | partial
+        if not matched:
+            continue
+
+        # Coverage: fraction of query words matched
+        coverage = len(matched) / max(len(query_words), 1)
+
+        # Partial matches worth half an exact match
+        match_score = len(exact) + (len(partial) * 0.5)
+
+        relevance = match_score * coverage * memory["score"]
+        scored.append((relevance, memory))
 
     scored.sort(key=lambda x: x[0], reverse=True)
 
