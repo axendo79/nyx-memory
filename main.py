@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from llm.client import query_llm
 from memory.store import load_memories, save_memories, add_memory
 from memory.retrieve import retrieve_relevant
+from memory.dream import run_dream
 
 load_dotenv()
 
@@ -44,7 +45,7 @@ def handle_debug(query: str, memories: list) -> None:
 
 
 def run():
-    print("Nyx is running. Type 'exit' to quit, '/debug <query>' to inspect memory.\n")
+    print("Nyx is running. Type 'exit' to quit, '/debug <query>' to inspect memory, '/dream' to synthesize.\n")
     memories = load_memories(MEMORY_PATH)
 
     while True:
@@ -57,6 +58,10 @@ def run():
 
         if user_input.startswith("/debug "):
             handle_debug(user_input[7:].strip(), memories)
+            continue
+
+        if user_input == "/dream":
+            memories = run_dream(memories, MEMORY_PATH)
             continue
 
         # Retrieve top 3 relevant memories above score threshold
