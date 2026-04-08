@@ -9,6 +9,7 @@ from llm.client import query_llm
 from memory.store import load_memories, save_memories, add_memory
 from memory.retrieve import retrieve_relevant
 from memory.dream import run_dream
+from memory.audit import run_audit
 
 load_dotenv()
 
@@ -62,6 +63,10 @@ def run():
 
         if user_input == "/dream":
             memories = run_dream(memories, MEMORY_PATH)
+            continue
+
+        if user_input == "/audit":
+            run_audit(memories)
             continue
 
         # Retrieve top 3 relevant memories above score threshold
