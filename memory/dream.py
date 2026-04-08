@@ -50,7 +50,7 @@ def run_dream(memories: List[Dict], memory_path: str) -> List[Dict]:
 
     entry = {
         "text": result,
-        "score": 1.0,
+        "score": 0.8,
         "last_used": time.time(),
         "created": time.time(),
         "source": "dream",
