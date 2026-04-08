@@ -164,6 +164,7 @@ def boost_score(memory: Dict, amount: float = 0.5) -> Dict:
     """Increase score when memory is retrieved."""
     memory["score"] = min(memory["score"] + amount, 10.0)
     memory["last_used"] = time.time()
+    memory["uses"] = memory.get("uses", 0) + 1
     return memory
 
 
