@@ -2,7 +2,9 @@
 
 > Decay by default, reinforce what matters.
 
-Nyx is a local-first AI memory wrapper. Instead of storing everything, memory persists only through repeated relevance — forming a more human-like conversational identity over time.
+Nyx is a local-first AI memory system for persistent context.
+
+It selectively stores, scores, and recalls information over time — allowing a local LLM to build continuity across conversations without storing everything.
 
 ## What it does
 
@@ -10,6 +12,14 @@ Nyx is a local-first AI memory wrapper. Instead of storing everything, memory pe
 - Stores conversation memories in a local JSON file
 - Retrieves relevant memories and injects them into each prompt
 - Scores memories on retrieval — unused memories decay and are pruned
+
+- ## What this is NOT
+
+- Not a pentesting tool or MCP server  
+- Not a vector database or RAG framework  
+- Not a full agent system  
+
+Nyx focuses specifically on long-term memory: what to keep, what to forget, and what to surface.
 
 ## Quickstart
 
