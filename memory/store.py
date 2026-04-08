@@ -123,18 +123,23 @@ def add_memory(memories: List[Dict], user_input: str, response: str) -> List[Dic
     u = user_input.strip()
     if "[Error:" in response:
         log.warning("add event=skip_error_response input_len=%d", len(user_input))
+        print(f"[filter] Rejected: {user_input[:60]}")
         return memories
     if len(u) + len(response.strip()) < 20:
         log.info("add event=skip_too_short input=%.40r", u)
+        print(f"[filter] Rejected: {user_input[:60]}")
         return memories
     if u.lower().startswith(("you:", "nyx:")):
         log.info("add event=skip_echo_prefix input=%.40r", u)
+        print(f"[filter] Rejected: {user_input[:60]}")
         return memories
     if u.startswith("/"):
         log.info("add event=skip_command input=%.40r", u)
+        print(f"[filter] Rejected: {user_input[:60]}")
         return memories
     if any(u.startswith(cmd) for cmd in (".venv", "python", "cd ", "dir ", "git ", "PS ", "code ")):
         log.info("add event=skip_shell_noise input=%.40r", u)
+        print(f"[filter] Rejected: {user_input[:60]}")
         return memories
 
     clean_input = sanitize(user_input)
