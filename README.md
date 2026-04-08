@@ -31,7 +31,7 @@ and what to surface.
 
 ```bash
 # 1. Clone and enter the repo
-git clone https://github.com/yourname/nyx-memory
+git clone https://github.com/axendo79/nyx-memory
 cd nyx-memory
 
 # 2. Create virtual environment
@@ -91,9 +91,24 @@ Each memory entry:
   "text": "User said: ... | Nyx responded: ...",
   "score": 1.0,
   "last_used": 1234567890,
-  "created": 1234567890
+  "created": 1234567890,
+  "source": "conversation",
+  "confidence": 1.0,
+  "uses": 0
 }
 ```
+
+**Fields:**
+
+| Field | Description |
+|---|---|
+| `text` | Raw memory content |
+| `score` | Retrieval weight — increases on use, decays over time |
+| `last_used` | Unix timestamp of last retrieval |
+| `created` | Unix timestamp of creation |
+| `source` | Origin: `conversation`, `watcher`, or `dream` |
+| `confidence` | Ingest confidence (0.0–1.0) |
+| `uses` | Number of times retrieved |
 
 - Score increases on retrieval
 - Score decays over time via `apply_decay()`
@@ -117,6 +132,17 @@ Each memory entry:
 - `.env` is gitignored — never commit secrets
 - `data/memory.json` is gitignored — memory stays local
 - LM Studio endpoint is localhost only — never expose externally
+
+---
+
+## Commands
+
+| Command | Description |
+|---|---|
+| `/debug <query>` | Show top matching memories for a query |
+| `/debug all` | Dump all memories with scores |
+| `/dream` | Synthesize new memories from top-scored existing ones |
+| `/audit` | Show memory stats: count, avg score, sources, confidence |
 
 ---
 
