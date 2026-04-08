@@ -49,8 +49,8 @@ def run_dream(memories: List[Dict], memory_path: str) -> List[Dict]:
         return memories
 
     entry = {
-        "text": f"[Dream] {result}",
-        "score": 2.0,
+        "text": result,
+        "score": 1.0,
         "last_used": time.time(),
         "created": time.time(),
         "source": "dream",
@@ -60,7 +60,8 @@ def run_dream(memories: List[Dict], memory_path: str) -> List[Dict]:
     memories.append(entry)
     save_memories(memory_path, memories)
 
-    print(f"[dream] Stored: {result[:120]}")
+    print(f"[dream] Stored: {result}")
+    print(f"[dream] 1 synthesis added.")
     log.info("dream event=stored result_len=%d total=%d", len(result), len(memories))
 
     return memories
