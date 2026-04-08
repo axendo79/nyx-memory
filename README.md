@@ -122,15 +122,8 @@ Each memory entry:
 
 ## Roadmap
 
-- **Improved retrieval** — move beyond keyword overlap toward
-  lightweight semantic matching so memories surface by meaning,
-  not just shared words
-- **Junk filter** — smarter ingest filtering to keep memory clean
-  and prevent low-signal entries from accumulating
 - **Tunable decay** — per-entry and global decay controls,
   configurable via `.env`
-- **query_nyx.py** — standalone memory query tool for inspecting
-  and testing retrieval outside the main loop
 - **Personality emergence** — track which topics and tones are most
   reinforced over time and let those patterns shape Nyx's default
   response style organically
