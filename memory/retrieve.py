@@ -3,6 +3,7 @@ Memory retrieval — keyword match with score threshold.
 Simple and fast for V1. Embedding-based retrieval is a future upgrade.
 """
 
+import re
 from typing import List, Dict
 
 from memory.store import boost_score
@@ -23,14 +24,14 @@ def retrieve_relevant(
     Boosts score of matched memories (retrieval-based scoring).
     Returns top_n results sorted by score descending.
     """
-    query_words = set(query.lower().split())
+    query_words = set(re.findall(r'\b\w+\b', query.lower()))
     scored = []
 
     for memory in memories:
         if memory.get("score", 0) < min_score:
             continue
 
-        memory_words = set(memory["text"].lower().split())
+        memory_words = set(re.findall(r'\b\w+\b', memory["text"].lower()))
         overlap = query_words & memory_words
 
         if overlap:
