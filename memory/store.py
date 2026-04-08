@@ -144,6 +144,8 @@ def add_memory(memories: List[Dict], user_input: str, response: str) -> List[Dic
         "score": 1.0,
         "last_used": time.time(),
         "created": time.time(),
+        "source": "user",
+        "confidence": "medium",
     }
     candidate = entry["text"]
     for existing in memories:
