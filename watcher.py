@@ -3,10 +3,13 @@ Nyx file watcher — monitors Inbox for new files, summarizes via LLM,
 stores the result in memory.
 """
 
+import hashlib
+import json
 import os
 import sys
 import time
 import logging
+from pathlib import Path
 from dotenv import load_dotenv
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -18,6 +21,26 @@ from nyx_logger import get_logger
 load_dotenv()
 
 INBOX_PATH = os.getenv("INBOX_PATH", r"D:\Nyx\Inbox")
+PROCESSED_HASHES_FILE = Path(os.getenv("NYX_DATA_DIR", "data")) / "processed_files.json"
+
+
+def load_processed_hashes() -> set:
+    if PROCESSED_HASHES_FILE.exists():
+        with open(PROCESSED_HASHES_FILE, "r") as f:
+            return set(json.load(f))
+    return set()
+
+
+def save_processed_hashes(hashes: set) -> None:
+    with open(PROCESSED_HASHES_FILE, "w") as f:
+        json.dump(list(hashes), f)
+
+
+def file_hash(path: str) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        h.update(f.read())
+    return h.hexdigest()
 MEMORY_PATH = os.getenv("MEMORY_PATH", os.path.join(os.path.dirname(__file__), "data", "memory.json"))
 
 TEXT_EXTENSIONS = {
@@ -88,17 +111,30 @@ def summarize_and_store(filepath: str) -> None:
 
 
 class InboxHandler(FileSystemEventHandler):
+    def __init__(self):
+        self.processed = load_processed_hashes()
+
+    def _handle(self, path: str) -> None:
+        if not os.path.exists(path):
+            return
+        h = file_hash(path)
+        if h in self.processed:
+            return
+        self.processed.add(h)
+        save_processed_hashes(self.processed)
+        summarize_and_store(path)
+
     def on_created(self, event):
         if event.is_directory:
             return
         time.sleep(0.5)
-        summarize_and_store(event.src_path)
+        self._handle(event.src_path)
 
     def on_moved(self, event):
         if event.is_directory:
             return
         time.sleep(0.5)
-        summarize_and_store(event.dest_path)
+        self._handle(event.dest_path)
 
 
 def run():
