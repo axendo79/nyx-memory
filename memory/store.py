@@ -6,6 +6,7 @@ Writes are atomic: temp file → validate → os.replace() → backup .bak.
 A module-level Lock serialises concurrent access within a process.
 """
 
+import difflib
 import json
 import os
 import re
@@ -118,13 +119,22 @@ def add_memory(memories: List[Dict], user_input: str, response: str) -> List[Dic
     Score starts at 1.0 and decays over time if not retrieved.
     Skips storing if the response indicates an LLM error.
     """
+    # Junk filter
+    u = user_input.strip()
     if "[Error:" in response:
         log.warning("add event=skip_error_response input_len=%d", len(user_input))
         return memories
-
-    _COMMAND_PREFIXES = (".venv", "python", "cd ", "dir ", "git ")
-    if user_input.lstrip().startswith(_COMMAND_PREFIXES):
-        log.info("add event=skip_command_input input=%.40r", user_input)
+    if len(u) + len(response.strip()) < 20:
+        log.info("add event=skip_too_short input=%.40r", u)
+        return memories
+    if u.lower().startswith(("you:", "nyx:")):
+        log.info("add event=skip_echo_prefix input=%.40r", u)
+        return memories
+    if u.startswith("/"):
+        log.info("add event=skip_command input=%.40r", u)
+        return memories
+    if any(u.startswith(cmd) for cmd in (".venv", "python", "cd ", "dir ", "git ", "PS ", "code ")):
+        log.info("add event=skip_shell_noise input=%.40r", u)
         return memories
 
     clean_input = sanitize(user_input)
@@ -135,6 +145,14 @@ def add_memory(memories: List[Dict], user_input: str, response: str) -> List[Dic
         "last_used": time.time(),
         "created": time.time(),
     }
+    candidate = entry["text"]
+    for existing in memories:
+        ratio = difflib.SequenceMatcher(None, candidate, existing["text"]).ratio()
+        if ratio >= 0.85:
+            boost_score(existing)
+            log.info("add event=skip_duplicate similarity=%.2f total=%d", ratio, len(memories))
+            return memories
+
     memories.append(entry)
     log.info("add event=add_memory input_len=%d response_len=%d total=%d", len(clean_input), len(clean_response), len(memories))
     return memories

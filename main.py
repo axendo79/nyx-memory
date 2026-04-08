@@ -26,6 +26,13 @@ def build_prompt(user_input: str, memories: list) -> str:
 
 
 def handle_debug(query: str, memories: list) -> None:
+    if query == "all":
+        print(f"\n[debug] All memories ({len(memories)} total):")
+        for m in memories:
+            print(f"  score={m['score']:.2f} | {m['text'][:80]}")
+        print()
+        return
+
     results = retrieve_relevant(query, memories, top_n=5, min_score=MIN_SCORE)
     if not results:
         print(f"\n[debug] No memories found for: {query!r}\n")
