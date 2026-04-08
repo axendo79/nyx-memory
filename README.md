@@ -8,7 +8,7 @@ It selectively stores, scores, and recalls information over time — allowing a 
 
 ## What it does
 
-- Wraps any OpenAI-compatible local LLM (LM Studio, KoboldCPP, etc.)
+- Adds persistent memory to any OpenAI-compatible local LLM (LM Studio, KoboldCPP, etc.)
 - Stores conversation memories in a local JSON file
 - Retrieves relevant memories and injects them into each prompt
 - Scores memories on retrieval — unused memories decay and are pruned
