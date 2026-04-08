@@ -12,6 +12,10 @@ from nyx_logger import get_logger
 log = get_logger("retrieve")
 
 
+def tokenize(text: str) -> set:
+    return set(re.findall(r'\b\w+\b', text.lower()))
+
+
 def retrieve_relevant(
     query: str,
     memories: List[Dict],
@@ -24,14 +28,14 @@ def retrieve_relevant(
     Boosts score of matched memories (retrieval-based scoring).
     Returns top_n results sorted by score descending.
     """
-    query_words = set(re.findall(r'\b\w+\b', query.lower()))
+    query_words = tokenize(query)
     scored = []
 
     for memory in memories:
         if memory.get("score", 0) < min_score:
             continue
 
-        memory_words = set(re.findall(r'\b\w+\b', memory["text"].lower()))
+        memory_words = tokenize(memory["text"])
         overlap = query_words & memory_words
 
         if overlap:
