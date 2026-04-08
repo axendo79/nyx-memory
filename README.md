@@ -7,6 +7,18 @@ local LLM to build continuity across conversations without storing everything.
 
 ---
 
+## Current Status
+
+- Stable memory storage with deduplication and decay
+- Junk filtering on ingest
+- Retrieval with keyword + partial matching
+- Dream synthesis working (manual trigger)
+- Built-in tools: `/debug`, `/audit`, `/selftest`
+
+Actively being developed and tested with real usage.
+
+---
+
 ## What it does
 
 - Adds persistent memory to any OpenAI-compatible local LLM (LM Studio, KoboldCPP, etc.)
@@ -24,6 +36,19 @@ local LLM to build continuity across conversations without storing everything.
 
 Nyx focuses specifically on long-term memory: what to keep, what to forget,
 and what to surface.
+
+---
+
+## Example
+
+```
+You: "I prefer working in short focused sessions."
+
+Later:
+
+You: "How do I work best?"
+Nyx: "You prefer working in short focused sessions."
+```
 
 ---
 
@@ -59,12 +84,38 @@ python main.py
 
 ---
 
+## Commands
+
+| Command | Description |
+|---|---|
+| `/debug <query>` | Show top matching memories for a query |
+| `/debug all` | Dump all memories with scores |
+| `/dream` | Synthesize patterns from memory |
+| `/audit` | Check memory health and stats |
+| `/selftest` | Run built-in system validation |
+
+---
+
+## Dream Cycle
+
+Nyx can synthesize patterns from memory using `/dream`.
+
+It selects high-confidence memories, sends them to the LLM for reflection,
+and stores the result as a low-confidence inferred memory. This allows
+interests and patterns to emerge over time without overwriting original data.
+
+Dream entries are marked `source: dream, confidence: low` and never feed
+back into future synthesis cycles.
+
+---
+
 ## Project structure
 
 ```
 nyx/
-├── main.py              # Main loop and debug commands
+├── main.py              # Main loop and command handling
 ├── clean_memory.py      # One-time memory cleanup and dedup
+├── selftest.py          # Built-in system validation
 ├── watcher.py           # Inbox file watcher
 ├── nyx_logger.py        # Logging
 ├── query_nyx.py         # Standalone memory query tool
@@ -72,7 +123,9 @@ nyx/
 │   └── client.py        # LLM endpoint client
 ├── memory/
 │   ├── store.py         # Save/load/score/dedup memories
-│   └── retrieve.py      # Keyword retrieval with scoring
+│   ├── retrieve.py      # Keyword retrieval with scoring
+│   ├── dream.py         # Dream Cycle synthesis
+│   └── audit.py         # Memory health checks
 ├── data/
 │   └── memory.json      # Local memory storage (gitignored)
 ├── .env.example         # Config template
@@ -90,40 +143,19 @@ Each memory entry:
 {
   "text": "User said: ... | Nyx responded: ...",
   "score": 1.0,
-  "last_used": 1234567890,
+  "uses": 2,
+  "source": "user",
+  "confidence": "medium",
   "created": 1234567890,
-  "source": "conversation",
-  "confidence": 1.0,
-  "uses": 0
+  "last_used": 1234567890
 }
 ```
-
-**Fields:**
-
-| Field | Description |
-|---|---|
-| `text` | Raw memory content |
-| `score` | Retrieval weight — increases on use, decays over time |
-| `last_used` | Unix timestamp of last retrieval |
-| `created` | Unix timestamp of creation |
-| `source` | Origin: `conversation`, `watcher`, or `dream` |
-| `confidence` | Ingest confidence (0.0–1.0) |
-| `uses` | Number of times retrieved |
 
 - Score increases on retrieval
 - Score decays over time via `apply_decay()`
 - Entries below `MIN_SCORE` threshold are pruned
-- Near-duplicate entries (≥85% similarity) are collapsed on ingest,
-  boosting the existing entry instead of writing a new one
-
----
-
-## Debug commands
-
-| Command | Description |
-|---|---|
-| `/debug <query>` | Show top matching memories for a query |
-| `/debug all` | Dump all memories with scores (diagnostic) |
+- Near-duplicate entries (≥85% similarity) are collapsed on ingest
+- Dream entries start at score 0.8 and decay faster than user memories
 
 ---
 
@@ -135,21 +167,16 @@ Each memory entry:
 
 ---
 
-## Commands
+## Roadmap
 
-| Command | Description |
-|---|---|
-| `/debug <query>` | Show top matching memories for a query |
-| `/debug all` | Dump all memories with scores |
-| `/dream` | Synthesize new memories from top-scored existing ones |
-| `/audit` | Show memory stats: count, avg score, sources, confidence |
+- **Improved retrieval** — content-aware matching beyond keyword overlap
+- **Faster dream decay** — dream entries should fade unless reinforced
+- **Tunable decay** — per-entry decay controls via `.env`
+- **Personality emergence** — let reinforced patterns shape response style
 
 ---
 
-## Roadmap
+## Support
 
-- **Tunable decay** — per-entry and global decay controls,
-  configurable via `.env`
-- **Personality emergence** — track which topics and tones are most
-  reinforced over time and let those patterns shape Nyx's default
-  response style organically
+If Nyx is useful to you, a small tip is appreciated:
+[Venmo @Joshua-Holliday-15](https://venmo.com/Joshua-Holliday-15)
