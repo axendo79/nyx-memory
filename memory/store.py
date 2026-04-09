@@ -14,6 +14,7 @@ import threading
 import time
 from typing import List, Dict
 
+from filelock import FileLock
 from nyx_logger import get_logger
 
 log = get_logger("store")
@@ -21,6 +22,10 @@ log = get_logger("store")
 # Shared lock — protects load/save within a single process.
 # Cross-process safety relies on atomic os.replace().
 _lock = threading.Lock()
+
+
+def _get_file_lock(path: str) -> FileLock:
+    return FileLock(path + ".lock", timeout=10)
 
 # Prompt injection patterns to strip before storing
 _INJECTION_PATTERNS = [
@@ -49,8 +54,9 @@ def sanitize(text: str) -> str:
 
 def load_memories(path: str) -> List[Dict]:
     """Load memories from JSON file. Falls back to .bak if main file is corrupt."""
-    with _lock:
-        return _load_unlocked(path)
+    with _get_file_lock(path):
+        with _lock:
+            return _load_unlocked(path)
 
 
 def _load_unlocked(path: str) -> List[Dict]:
@@ -75,8 +81,9 @@ def save_memories(path: str, memories: List[Dict]) -> None:
     3. Back up existing file to <path>.bak
     4. os.replace() tmp → final path
     """
-    with _lock:
-        _save_unlocked(path, memories)
+    with _get_file_lock(path):
+        with _lock:
+            _save_unlocked(path, memories)
 
 
 def _save_unlocked(path: str, memories: List[Dict]) -> None:
