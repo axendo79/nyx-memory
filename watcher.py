@@ -17,6 +17,7 @@ from watchdog.events import FileSystemEventHandler
 
 from llm.client import query_llm
 from memory.store import load_memories, save_memories, add_memory
+from memory.decay import apply_decay
 from nyx_logger import get_logger
 
 load_dotenv()
@@ -118,6 +119,7 @@ def summarize_and_store(filepath: str) -> None:
 
     memories = load_memories(MEMORY_PATH)
     memories = add_memory(memories, f"[Inbox file: {filename}]", summary)
+    memories = apply_decay(memories)
     save_memories(MEMORY_PATH, memories)
     console.info("Stored in memory.")
     log.info("ingest event=stored path=%s total_memories=%d", filename, len(memories))
