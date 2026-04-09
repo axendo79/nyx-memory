@@ -11,6 +11,7 @@ from memory.retrieve import retrieve_relevant
 from memory.dream import run_dream
 from memory.audit import run_audit
 from memory.decay import apply_decay
+from knowledge.retrieve import retrieve_knowledge
 
 load_dotenv()
 
@@ -18,14 +19,19 @@ MEMORY_PATH = os.getenv("MEMORY_PATH", os.path.join(os.path.dirname(__file__), "
 MIN_SCORE = float(os.getenv("MIN_SCORE", 0.3))
 
 
-def build_prompt(user_input: str, memories: list) -> str:
+def build_prompt(user_input: str, memories: list, knowledge: list = None) -> str:
+    parts = []
+    if knowledge:
+        context = "\n\n".join(
+            f"[{k['name']}]\n{k['content'][:500]}"
+            for k in knowledge
+        )
+        parts.append(f"Relevant knowledge:\n{context}")
     if memories:
         memory_block = "\n".join(f"- {m['text'][:100]}" for m in memories)
-        return (
-            f"Relevant context from memory:\n{memory_block}\n\n"
-            f"User: {user_input}"
-        )
-    return f"User: {user_input}"
+        parts.append(f"Relevant memory:\n{memory_block}")
+    parts.append(f"User: {user_input}")
+    return "\n\n".join(parts)
 
 
 def handle_debug(query: str, memories: list) -> None:
@@ -81,7 +87,9 @@ def run():
         print(f"[RETRIEVE] found={len(relevant)} top_score={relevant[0]['score']:.2f}" if relevant else "[RETRIEVE] found=0")
 
         # Build prompt with injected memory context
-        prompt = build_prompt(user_input, relevant)
+        knowledge = retrieve_knowledge(user_input)
+        print(f"[KNOWLEDGE] found={len(knowledge)}")
+        prompt = build_prompt(user_input, relevant, knowledge)
 
         # Query local LLM
         response = query_llm(prompt)
