@@ -6,6 +6,7 @@ stores the result in memory.
 import hashlib
 import json
 import os
+import re
 import sys
 import time
 import logging
@@ -42,6 +43,7 @@ def file_hash(path: str) -> str:
         h.update(f.read())
     return h.hexdigest()
 MEMORY_PATH = os.getenv("MEMORY_PATH", os.path.join(os.path.dirname(__file__), "data", "memory.json"))
+KNOWLEDGE_PATH = os.getenv("KNOWLEDGE_PATH", r"D:\Nyx\Knowledge")
 
 TEXT_EXTENSIONS = {
     ".txt", ".md", ".csv", ".log", ".json", ".yaml", ".yml",
@@ -81,6 +83,17 @@ def extract_text(filepath: str) -> str | None:
         return None
 
 
+def write_knowledge(filename: str, summary: str) -> None:
+    """Write summary to knowledge/*.md using the source filename as the key."""
+    os.makedirs(KNOWLEDGE_PATH, exist_ok=True)
+    stem = re.sub(r'[^\w\-]', '_', Path(filename).stem)[:50]
+    knowledge_file = os.path.join(KNOWLEDGE_PATH, f"{stem}.md")
+    with open(knowledge_file, "w", encoding="utf-8") as f:
+        f.write(f"# {filename}\n\n{summary}\n")
+    console.info("Written to knowledge: %s", os.path.basename(knowledge_file))
+    log.info("ingest event=knowledge_written path=%s", os.path.basename(knowledge_file))
+
+
 def summarize_and_store(filepath: str) -> None:
     """Extract text, send to LLM for summarization, store in memory."""
     filename = os.path.basename(filepath)
@@ -108,6 +121,7 @@ def summarize_and_store(filepath: str) -> None:
     save_memories(MEMORY_PATH, memories)
     console.info("Stored in memory.")
     log.info("ingest event=stored path=%s total_memories=%d", filename, len(memories))
+    write_knowledge(filename, summary)
 
 
 class InboxHandler(FileSystemEventHandler):
