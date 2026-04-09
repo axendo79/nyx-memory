@@ -10,6 +10,7 @@ from memory.store import load_memories, save_memories, add_memory
 from memory.retrieve import retrieve_relevant
 from memory.dream import run_dream
 from memory.audit import run_audit
+from memory.decay import apply_decay
 
 load_dotenv()
 
@@ -49,6 +50,12 @@ def run():
     print("Nyx is running. Type 'exit' to quit, '/debug <query>' to inspect memory, '/dream' to synthesize.\n")
     memories = load_memories(MEMORY_PATH)
 
+    original_count = len(memories)
+    memories = apply_decay(memories)
+    if len(memories) != original_count:
+        save_memories(MEMORY_PATH, memories)
+        print(f"[DECAY] pruned={original_count - len(memories)} remaining={len(memories)}")
+
     while True:
         user_input = input("You: ").strip()
         if not user_input:
@@ -81,6 +88,7 @@ def run():
 
         # Store this exchange as a new memory
         memories = add_memory(memories, user_input, response)
+        memories = apply_decay(memories)
         save_memories(MEMORY_PATH, memories)
 
 
