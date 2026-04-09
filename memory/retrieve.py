@@ -67,6 +67,7 @@ def retrieve_relevant(
     results = []
     for _, memory in scored[:top_n]:
         memory = boost_score(memory)
+        print(f"[BOOST] score boosted to {memory['score']:.2f}")
         results.append(memory)
 
     top_score = results[0]["score"] if results else 0.0

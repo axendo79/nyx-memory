@@ -78,6 +78,7 @@ def run():
 
         # Retrieve top 3 relevant memories above score threshold
         relevant = retrieve_relevant(user_input, memories, top_n=3, min_score=MIN_SCORE)
+        print(f"[RETRIEVE] found={len(relevant)} top_score={relevant[0]['score']:.2f}" if relevant else "[RETRIEVE] found=0")
 
         # Build prompt with injected memory context
         prompt = build_prompt(user_input, relevant)
@@ -88,7 +89,10 @@ def run():
 
         # Store this exchange as a new memory
         memories = add_memory(memories, user_input, response)
+        original_count_loop = len(memories)
         memories = apply_decay(memories)
+        if len(memories) != original_count_loop:
+            print(f"[DECAY] pruned={original_count_loop - len(memories)} remaining={len(memories)}")
         save_memories(MEMORY_PATH, memories)
 
 
