@@ -15,6 +15,8 @@ from memory.store import add_memory, boost_score, load_memories
 from memory.retrieve import retrieve_relevant
 from memory.decay import apply_decay
 from llm.client import query_llm
+from knowledge.retrieve import retrieve_knowledge
+from main import build_prompt
 
 load_dotenv()
 
@@ -115,6 +117,37 @@ try:
     check("query_llm fails gracefully without LM Studio", True)
 except Exception:
     check("query_llm fails gracefully without LM Studio", True)
+
+
+# --- Test 9: retrieve_knowledge returns results for matching query ---
+try:
+    results = retrieve_knowledge("sci-fi pie")
+    check("retrieve_knowledge returns results for matching query", len(results) > 0)
+except Exception as e:
+    check("retrieve_knowledge returns results for matching query", False)
+    print(f"         {e}")
+
+
+# --- Test 10: retrieve_knowledge handles missing KNOWLEDGE_PATH gracefully ---
+try:
+    from knowledge.retrieve import read_knowledge_files
+    import unittest.mock as mock
+    with mock.patch("knowledge.retrieve.KNOWLEDGE_PATH", "/nonexistent/path"):
+        docs = read_knowledge_files()
+    check("retrieve_knowledge handles missing path gracefully", docs == [])
+except Exception as e:
+    check("retrieve_knowledge handles missing path gracefully", False)
+    print(f"         {e}")
+
+
+# --- Test 11: build_prompt includes knowledge block when provided ---
+try:
+    knowledge = [{"name": "test.md", "content": "This is test knowledge."}]
+    prompt = build_prompt("test query", [], knowledge)
+    check("build_prompt includes knowledge block", "Relevant knowledge" in prompt and "test.md" in prompt)
+except Exception as e:
+    check("build_prompt includes knowledge block", False)
+    print(f"         {e}")
 
 
 # --- Result ---
