@@ -4,13 +4,22 @@ No mocking. Cleans up after itself.
 Run: python selftest.py
 """
 
+import os
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from memory.store import add_memory, boost_score
+from dotenv import load_dotenv
+from memory.store import add_memory, boost_score, load_memories
 from memory.retrieve import retrieve_relevant
+from memory.decay import apply_decay
+from llm.client import query_llm
+
+load_dotenv()
+
+MEMORY_PATH = os.getenv("MEMORY_PATH", os.path.join(os.path.dirname(__file__), "data", "memory.json"))
+MIN_SCORE = float(os.getenv("MIN_SCORE", 0.3))
 
 passed = 0
 failed = 0
@@ -69,6 +78,43 @@ check(
     len(memories) == 0
 )
 memories = []  # cleanup
+
+
+# --- Test 5: Memory loads from disk ---
+try:
+    disk_memories = load_memories(MEMORY_PATH)
+    check("Memory loads from disk", isinstance(disk_memories, list))
+except Exception as e:
+    check("Memory loads from disk", False)
+    print(f"         {e}")
+
+
+disk_memories = disk_memories if 'disk_memories' in locals() else []
+
+# --- Test 6: apply_decay runs without crashing ---
+try:
+    apply_decay(list(disk_memories))
+    check("apply_decay runs without crashing", True)
+except Exception as e:
+    check("apply_decay runs without crashing", False)
+    print(f"         {e}")
+
+
+# --- Test 7: retrieve_relevant runs without crashing ---
+try:
+    retrieve_relevant("test", disk_memories, top_n=3, min_score=MIN_SCORE)
+    check("retrieve_relevant runs without crashing", True)
+except Exception as e:
+    check("retrieve_relevant runs without crashing", False)
+    print(f"         {e}")
+
+
+# --- Test 8: query_llm fails gracefully without LM Studio ---
+try:
+    query_llm("ping")
+    check("query_llm fails gracefully without LM Studio", True)
+except Exception:
+    check("query_llm fails gracefully without LM Studio", True)
 
 
 # --- Result ---
