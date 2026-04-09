@@ -10,15 +10,18 @@ local LLM to build continuity across conversations without storing everything.
 ## Current Status
 
 - Stable memory storage with deduplication and decay
-- Junk filtering on ingest
+- Junk filtering and prompt injection sanitization on all write paths
 - Retrieval with keyword + partial matching
-- Dream synthesis working (manual trigger)
+- Dream synthesis working (manual trigger) — output sanitized before storage
 - Knowledge layer — persistent `.md` files injected alongside memory context
 - Dual ingest via watcher — summaries written to both memory and knowledge
+- Cross-process file locking on all memory reads/writes
+- Decay and retrieval thresholds unified via `MIN_SCORE` env — no zombie entries
+- Boost only fires after confirmed LLM success — failed exchanges don't reinforce memory
 - Console observability — `[RETRIEVE]`, `[BOOST]`, `[DECAY]`, `[KNOWLEDGE]` events visible in real time
 - Prompt discipline — system prompt tuned for concise, direct output
-- 8/8 selftest passing
-- Built-in tools: `/debug`, `/audit`, `/dream`, `selftest.py`
+- 11/11 selftest passing
+- Built-in tools: `/debug`, `/audit`, `/dream`, `selftest.py`, `query_nyx.py --all`
 
 Actively being developed and tested with real usage.
 
@@ -98,6 +101,8 @@ python main.py
 | `/dream` | Synthesize patterns from memory |
 | `/audit` | Check memory health and stats |
 | `/selftest` | Run built-in system validation |
+| `python query_nyx.py "query"` | Standalone memory query (respects MIN_SCORE) |
+| `python query_nyx.py --all "query"` | Query including decayed memories |
 
 ---
 
