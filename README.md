@@ -13,7 +13,12 @@ local LLM to build continuity across conversations without storing everything.
 - Junk filtering on ingest
 - Retrieval with keyword + partial matching
 - Dream synthesis working (manual trigger)
-- Built-in tools: `/debug`, `/audit`, `/selftest`
+- Knowledge layer — persistent `.md` files injected alongside memory context
+- Dual ingest via watcher — summaries written to both memory and knowledge
+- Console observability — `[RETRIEVE]`, `[BOOST]`, `[DECAY]`, `[KNOWLEDGE]` events visible in real time
+- Prompt discipline — system prompt tuned for concise, direct output
+- 8/8 selftest passing
+- Built-in tools: `/debug`, `/audit`, `/dream`, `selftest.py`
 
 Actively being developed and tested with real usage.
 
@@ -124,8 +129,11 @@ nyx/
 ├── memory/
 │   ├── store.py         # Save/load/score/dedup memories
 │   ├── retrieve.py      # Keyword retrieval with scoring
+│   ├── decay.py         # Score decay and pruning
 │   ├── dream.py         # Dream Cycle synthesis
 │   └── audit.py         # Memory health checks
+├── knowledge/
+│   └── retrieve.py      # Keyword retrieval over Knowledge/*.md files
 ├── data/
 │   └── memory.json      # Local memory storage (gitignored)
 ├── .env.example         # Config template
@@ -173,6 +181,7 @@ Each memory entry:
 - **Faster dream decay** — dream entries should fade unless reinforced
 - **Tunable decay** — per-entry decay controls via `.env`
 - **Personality emergence** — let reinforced patterns shape response style
+- **Knowledge management** — commands to list, remove, or inspect knowledge files
 
 ---
 
