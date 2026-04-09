@@ -8,7 +8,7 @@ import time
 from typing import List, Dict
 
 from llm.client import query_llm
-from memory.store import save_memories
+from memory.store import save_memories, sanitize
 from nyx_logger import get_logger
 
 log = get_logger("dream")
@@ -46,6 +46,12 @@ def run_dream(memories: List[Dict], memory_path: str) -> List[Dict]:
     if not result or "[Error:" in result:
         print("[dream] Synthesis failed.")
         log.warning("dream event=synthesis_failed")
+        return memories
+
+    result = sanitize(result)
+    if not result:
+        print("[dream] Synthesis rejected by sanitizer.")
+        log.warning("dream event=sanitize_rejected")
         return memories
 
     entry = {
