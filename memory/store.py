@@ -171,20 +171,3 @@ def boost_score(memory: Dict, amount: float = 0.5) -> Dict:
     memory["last_used"] = time.time()
     memory["uses"] = memory.get("uses", 0) + 1
     return memory
-
-
-def apply_decay(memories: List[Dict], decay_rate: float = 0.99, min_score: float = 0.3) -> List[Dict]:
-    """
-    Apply score decay to all memories.
-    Prune entries that fall below min_score threshold.
-    """
-    before = len(memories)
-    decayed = []
-    for m in memories:
-        m["score"] *= decay_rate
-        if m["score"] >= min_score:
-            decayed.append(m)
-    pruned = before - len(decayed)
-    if pruned:
-        log.info("decay event=apply_decay pruned=%d remaining=%d", pruned, len(decayed))
-    return decayed
