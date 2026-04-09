@@ -120,9 +120,13 @@ class InboxHandler(FileSystemEventHandler):
         h = file_hash(path)
         if h in self.processed:
             return
-        self.processed.add(h)
-        save_processed_hashes(self.processed)
-        summarize_and_store(path)
+        try:
+            summarize_and_store(path)
+            self.processed.add(h)
+            save_processed_hashes(self.processed)
+        except Exception as e:
+            console.warning("Failed to process %s: %s", path, e)
+            log.warning("ingest event=process_failed path=%s error=%s", path, e)
 
     def on_created(self, event):
         if event.is_directory:
