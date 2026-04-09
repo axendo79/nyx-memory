@@ -24,7 +24,7 @@ def retrieve_relevant(
     """
     Find memories relevant to the query using keyword matching.
     Only returns memories above min_score threshold.
-    Boosts score of matched memories (retrieval-based scoring).
+    Matched memories are returned as-is; boosting happens in main.py after LLM confirms success.
     Returns top_n results sorted by score descending.
     """
     query_words = tokenize(query)
