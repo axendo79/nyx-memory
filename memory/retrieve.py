@@ -6,7 +6,6 @@ Simple and fast for V1. Embedding-based retrieval is a future upgrade.
 import re
 from typing import List, Dict
 
-from memory.store import boost_score
 from nyx_logger import get_logger
 
 log = get_logger("retrieve")
@@ -66,8 +65,6 @@ def retrieve_relevant(
 
     results = []
     for _, memory in scored[:top_n]:
-        memory = boost_score(memory)
-        print(f"[BOOST] score boosted to {memory['score']:.2f}")
         results.append(memory)
 
     top_score = results[0]["score"] if results else 0.0

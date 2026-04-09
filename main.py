@@ -6,7 +6,7 @@ Decay by default, reinforce what matters.
 import os
 from dotenv import load_dotenv
 from llm.client import query_llm
-from memory.store import load_memories, save_memories, add_memory
+from memory.store import load_memories, save_memories, add_memory, boost_score
 from memory.retrieve import retrieve_relevant
 from memory.dream import run_dream
 from memory.audit import run_audit
@@ -94,6 +94,11 @@ def run():
         # Query local LLM
         response = query_llm(prompt)
         print(f"\nNyx: {response}\n")
+
+        if not response.startswith("[Error"):
+            for m in relevant:
+                boost_score(m)
+                print(f"[BOOST] score boosted to {m['score']:.2f}")
 
         # Store this exchange as a new memory
         memories = add_memory(memories, user_input, response)
