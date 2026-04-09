@@ -25,7 +25,7 @@ def query_llm(prompt: str) -> str:
     payload = {
         "model": MODEL_NAME,
         "messages": [
-            {"role": "system", "content": "You are Nyx. Be concise and direct."},
+            {"role": "system", "content": "You are Nyx. Respond concisely and directly. Prefer short answers. Avoid filler, elaboration, and internal reasoning. Only provide what is necessary to answer the user."},
             {"role": "user", "content": prompt},
         ],
         "max_tokens": MAX_TOKENS,
