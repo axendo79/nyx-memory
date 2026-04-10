@@ -23,7 +23,7 @@ from nyx_logger import get_logger
 
 load_dotenv()
 
-INBOX_PATH = os.getenv("INBOX_PATH", r"D:\Nyx\Inbox")
+INBOX_PATH = os.getenv("INBOX_PATH")
 PROCESSED_HASHES_FILE = Path(os.getenv("NYX_DATA_DIR", "data")) / "processed_files.json"
 
 
@@ -45,7 +45,10 @@ def file_hash(path: str) -> str:
         h.update(f.read())
     return h.hexdigest()
 MEMORY_PATH = os.getenv("MEMORY_PATH", os.path.join(os.path.dirname(__file__), "data", "memory.json"))
-KNOWLEDGE_PATH = os.getenv("KNOWLEDGE_PATH", r"D:\Nyx\Knowledge")
+KNOWLEDGE_PATH = os.getenv(
+    "KNOWLEDGE_PATH",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "Knowledge"),
+)
 
 TEXT_EXTENSIONS = {
     ".txt", ".md", ".csv", ".log", ".json", ".yaml", ".yml",

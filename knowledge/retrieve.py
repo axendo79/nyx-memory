@@ -2,7 +2,10 @@ import os
 import re
 from typing import List, Dict
 
-KNOWLEDGE_PATH = os.getenv("KNOWLEDGE_PATH", r"D:\Nyx\Knowledge")
+KNOWLEDGE_PATH = os.getenv(
+    "KNOWLEDGE_PATH",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "Knowledge"),
+)
 
 
 def tokenize(text: str) -> set:
