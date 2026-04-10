@@ -172,9 +172,19 @@ def add_memory(memories: List[Dict], user_input: str, response: str) -> List[Dic
     return memories
 
 
-def boost_score(memory: Dict, amount: float = 0.5) -> Dict:
-    """Increase score when memory is retrieved."""
-    memory["score"] = min(memory["score"] + amount, 10.0)
+_BOOST_BY_SOURCE = {
+    "user":       0.5,
+    "dream":      0.25,
+    "hypothesis": 0.0,
+}
+_BOOST_DEFAULT = 0.5
+
+
+def boost_score(memory: Dict) -> Dict:
+    """Increase score when memory is retrieved. Amount varies by source."""
+    amount = _BOOST_BY_SOURCE.get(memory.get("source", ""), _BOOST_DEFAULT)
+    if amount > 0:
+        memory["score"] = min(memory["score"] + amount, 10.0)
     memory["last_used"] = time.time()
     memory["uses"] = memory.get("uses", 0) + 1
     return memory

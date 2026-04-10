@@ -58,7 +58,10 @@ def retrieve_relevant(
         # Partial matches worth half an exact match
         match_score = len(exact) + (len(partial) * 0.5)
 
-        relevance = match_score * coverage * memory["score"]
+        source_weight = {"user": 1.0, "dream": 0.6, "hypothesis": 0.3}.get(
+            memory.get("source", ""), 1.0
+        )
+        relevance = match_score * coverage * memory["score"] * source_weight
         scored.append((relevance, memory))
 
     scored.sort(key=lambda x: x[0], reverse=True)
