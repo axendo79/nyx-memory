@@ -66,4 +66,12 @@
 - README updated: commands table expanded (`/debug on|off`, `/why`, `demo.py`), `session_log.py` and `demo.py` added to project structure, session log and sanitizer count added to Current Status and Security sections.
 - Commits: `0f836c7`, `7d3b71f`
 
+## 2026-04-10 (Session 2)
+
+- /why command now correctly distinguishes injected vs silenced memories
+- session_log.py added — per-session JSON log, event-derived summary, try/finally wiring
+- demo.py added — scripted baseline vs naive vs Nyx comparison, 6 hardcoded scenarios
+- Sanitizer hardened with 7 Dream-specific patterns (14 total), system: scoped to line-start
+- README updated — demo instructions, session log mention, new commands, sanitizer count
+
 ---
