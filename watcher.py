@@ -12,6 +12,7 @@ import time
 import logging
 from pathlib import Path
 from dotenv import load_dotenv
+from filelock import FileLock
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
@@ -134,15 +135,21 @@ class InboxHandler(FileSystemEventHandler):
         if not os.path.exists(path):
             return
         h = file_hash(path)
-        if h in self.processed:
-            return
+        _lock = FileLock(str(PROCESSED_HASHES_FILE) + ".lock", timeout=10)
+        with _lock:
+            self.processed = load_processed_hashes()
+            if h in self.processed:
+                return
         try:
             summarize_and_store(path)
-            self.processed.add(h)
-            save_processed_hashes(self.processed)
         except Exception as e:
             console.warning("Failed to process %s: %s", path, e)
             log.warning("ingest event=process_failed path=%s error=%s", path, e)
+            return
+        with _lock:
+            self.processed = load_processed_hashes()
+            self.processed.add(h)
+            save_processed_hashes(self.processed)
 
     def on_created(self, event):
         if event.is_directory:
