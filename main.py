@@ -17,8 +17,21 @@ load_dotenv()
 
 MEMORY_PATH = os.getenv("MEMORY_PATH", os.path.join(os.path.dirname(__file__), "data", "memory.json"))
 MIN_SCORE = float(os.getenv("MIN_SCORE", 0.3))
+INJECT_THRESHOLD = float(os.getenv("INJECT_THRESHOLD", 0.5))
 DEBUG_MODE = False
 _last_why = None  # snapshot of last retrieval for /why
+
+
+def _memory_prefix(m: dict) -> str:
+    source = m.get("source", "")
+    score = m.get("score", 0)
+    if source == "dream":
+        return "Based on patterns I've noticed: "
+    if source == "user" and score >= 0.7:
+        return "You've mentioned: "
+    if source == "user":
+        return "You once mentioned: "
+    return ""
 
 
 def build_prompt(user_input: str, memories: list, knowledge: list = None) -> str:
@@ -29,8 +42,11 @@ def build_prompt(user_input: str, memories: list, knowledge: list = None) -> str
             for k in knowledge
         )
         parts.append(f"Relevant knowledge:\n{context}")
-    if memories:
-        memory_block = "\n".join(f"- {m['text'][:100]}" for m in memories)
+    injected = [m for m in memories if m.get("score", 0) >= INJECT_THRESHOLD]
+    if injected:
+        memory_block = "\n".join(
+            f"- {_memory_prefix(m)}{m['text'][:100]}" for m in injected
+        )
         parts.append(f"Relevant memory:\n{memory_block}")
     parts.append(f"User: {user_input}")
     return "\n\n".join(parts)
