@@ -84,4 +84,14 @@ Top 5 concerns identified via full codebase audit. Four fixed this session:
 - `selftest.py` test 9 now uses temp dir + mock patch instead of live Knowledge directory — passes on clean clone, no local state dependency. Commit: `a32a8f5`
 - Deferred: `audit.py` O(n²) duplicate detection — not urgent at current memory scale.
 
+## 2026-04-10 (Session 4) — Bug fixes from second project analysis
+
+Top 5 concerns identified via full codebase audit (second pass). Three fixed, one deferred, one behavioral:
+
+- `clean_memory.py` filelock added to `load()` and `save()` — uses same `.lock` file as `store.py`, prevents data corruption when run concurrently with `main.py` or `watcher.py`. Commit: `2ac55e8`
+- Hardcoded Windows paths removed from `knowledge/retrieve.py` and `watcher.py` — `KNOWLEDGE_PATH` now resolves relative to script location via `__file__`. `INBOX_PATH` default removed entirely, startup guard handles `None` cleanly. Commit: `d5eb336`
+- `SYSTEM_PROMPT` now configurable via env var in `llm/client.py` — default behavior unchanged, override in `.env` to tune persona without editing source. Commit: `31cc90c`
+- Deferred: `knowledge/retrieve.py` reads all `.md` files on every query — needs caching strategy, defer until Knowledge directory is large enough to measure.
+- Deferred: single-word knowledge queries silently return nothing (overlap threshold of 2) — behavioral, not a bug.
+
 ---
