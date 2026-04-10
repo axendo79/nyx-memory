@@ -12,6 +12,7 @@ from memory.dream import run_dream
 from memory.audit import run_audit
 from memory.decay import apply_decay
 from knowledge.retrieve import retrieve_knowledge
+from session_log import SessionLog
 
 load_dotenv()
 
@@ -100,6 +101,7 @@ def handle_debug(query: str, memories: list) -> None:
 def run():
     global DEBUG_MODE, _last_why
     print("Nyx is running. Type 'exit' to quit, '/debug <query>' to inspect memory, '/dream' to synthesize.\n")
+    session = SessionLog()
     memories = load_memories(MEMORY_PATH)
 
     original_count = len(memories)
@@ -109,74 +111,88 @@ def run():
         if DEBUG_MODE:
             print(f"[DECAY] pruned={original_count - len(memories)} remaining={len(memories)}")
 
-    while True:
-        user_input = input("You: ").strip()
-        if not user_input:
-            continue
-        if user_input.lower() == "exit":
-            print("Nyx stopped.")
-            break
+    try:
+        while True:
+            user_input = input("You: ").strip()
+            if not user_input:
+                continue
+            if user_input.lower() == "exit":
+                print("Nyx stopped.")
+                break
 
-        if user_input == "/debug on":
-            DEBUG_MODE = True
-            print("[debug] verbose mode on\n")
-            continue
+            if user_input == "/debug on":
+                DEBUG_MODE = True
+                print("[debug] verbose mode on\n")
+                continue
 
-        if user_input == "/debug off":
-            DEBUG_MODE = False
-            print("[debug] verbose mode off\n")
-            continue
+            if user_input == "/debug off":
+                DEBUG_MODE = False
+                print("[debug] verbose mode off\n")
+                continue
 
-        if user_input.startswith("/debug "):
-            handle_debug(user_input[7:].strip(), memories)
-            continue
+            if user_input.startswith("/debug "):
+                handle_debug(user_input[7:].strip(), memories)
+                continue
 
-        if user_input == "/dream":
-            memories = run_dream(memories, MEMORY_PATH)
-            continue
+            if user_input == "/dream":
+                before = len(memories)
+                memories = run_dream(memories, MEMORY_PATH)
+                session.log_dream(success=len(memories) > before, result_len=len(memories) - before)
+                continue
 
-        if user_input == "/audit":
-            run_audit(memories)
-            continue
+            if user_input == "/audit":
+                run_audit(memories)
+                continue
 
-        if user_input == "/why":
-            handle_why()
-            continue
+            if user_input == "/why":
+                handle_why()
+                continue
 
-        # Retrieve top 3 relevant memories above score threshold
-        relevant = retrieve_relevant(user_input, memories, top_n=3, min_score=MIN_SCORE)
-        if DEBUG_MODE:
-            print(f"[RETRIEVE] found={len(relevant)} top_score={relevant[0]['score']:.2f}" if relevant else "[RETRIEVE] found=0")
-
-        # Build prompt with injected memory context
-        knowledge = retrieve_knowledge(user_input)
-        _last_why = {
-            "query": user_input,
-            "memories": [{"score": m["score"], "text": m["text"], "source": m.get("source", "")} for m in relevant],
-            "knowledge": [{"name": k["name"]} for k in knowledge],
-        }
-        if DEBUG_MODE:
-            print(f"[KNOWLEDGE] found={len(knowledge)}")
-        prompt = build_prompt(user_input, relevant, knowledge)
-
-        # Query local LLM
-        response = query_llm(prompt)
-        print(f"\nNyx: {response}\n")
-
-        if not response.startswith("[Error"):
-            for m in relevant:
-                boost_score(m)
-                if DEBUG_MODE:
-                    print(f"[BOOST] score boosted to {m['score']:.2f}")
-
-        # Store this exchange as a new memory
-        memories = add_memory(memories, user_input, response)
-        original_count_loop = len(memories)
-        memories = apply_decay(memories)
-        if len(memories) != original_count_loop:
+            # Retrieve top 3 relevant memories above score threshold
+            relevant = retrieve_relevant(user_input, memories, top_n=3, min_score=MIN_SCORE)
             if DEBUG_MODE:
-                print(f"[DECAY] pruned={original_count_loop - len(memories)} remaining={len(memories)}")
-        save_memories(MEMORY_PATH, memories)
+                print(f"[RETRIEVE] found={len(relevant)} top_score={relevant[0]['score']:.2f}" if relevant else "[RETRIEVE] found=0")
+            session.log_retrieval(
+                query=user_input,
+                found=len(relevant),
+                top_score=relevant[0]["score"] if relevant else 0.0,
+            )
+
+            # Build prompt with injected memory context
+            knowledge = retrieve_knowledge(user_input)
+            _last_why = {
+                "query": user_input,
+                "memories": [{"score": m["score"], "text": m["text"], "source": m.get("source", "")} for m in relevant],
+                "knowledge": [{"name": k["name"]} for k in knowledge],
+            }
+            if DEBUG_MODE:
+                print(f"[KNOWLEDGE] found={len(knowledge)}")
+            prompt = build_prompt(user_input, relevant, knowledge)
+
+            # Query local LLM
+            response = query_llm(prompt)
+            print(f"\nNyx: {response}\n")
+
+            if not response.startswith("[Error"):
+                for m in relevant:
+                    boost_score(m)
+                    if DEBUG_MODE:
+                        print(f"[BOOST] score boosted to {m['score']:.2f}")
+
+            # Store this exchange as a new memory
+            before = len(memories)
+            memories = add_memory(memories, user_input, response)
+            stored = len(memories) > before
+            session.log_ingest(stored=stored, text=user_input)
+            original_count_loop = len(memories)
+            memories = apply_decay(memories)
+            if len(memories) != original_count_loop:
+                if DEBUG_MODE:
+                    print(f"[DECAY] pruned={original_count_loop - len(memories)} remaining={len(memories)}")
+            save_memories(MEMORY_PATH, memories)
+
+    finally:
+        session.finalize()
 
 
 if __name__ == "__main__":
