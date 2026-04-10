@@ -15,6 +15,10 @@ LM_STUDIO_URL = os.getenv("LM_STUDIO_URL", "http://localhost:1234/v1/chat/comple
 MODEL_NAME = os.getenv("MODEL_NAME", "local-model")
 MAX_TOKENS = int(os.getenv("MAX_TOKENS", 512))
 TEMPERATURE = float(os.getenv("TEMPERATURE", 0.7))
+SYSTEM_PROMPT = os.getenv(
+    "SYSTEM_PROMPT",
+    "You are Nyx. Respond concisely and directly. Prefer short answers. Avoid filler, elaboration, and internal reasoning. Only provide what is necessary to answer the user.",
+)
 
 
 def query_llm(prompt: str) -> str:
@@ -25,7 +29,7 @@ def query_llm(prompt: str) -> str:
     payload = {
         "model": MODEL_NAME,
         "messages": [
-            {"role": "system", "content": "You are Nyx. Respond concisely and directly. Prefer short answers. Avoid filler, elaboration, and internal reasoning. Only provide what is necessary to answer the user."},
+            {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": prompt},
         ],
         "max_tokens": MAX_TOKENS,
