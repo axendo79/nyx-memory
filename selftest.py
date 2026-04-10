@@ -121,7 +121,13 @@ except Exception:
 
 # --- Test 9: retrieve_knowledge returns results for matching query ---
 try:
-    results = retrieve_knowledge("sci-fi pie")
+    import tempfile
+    import unittest.mock as mock
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, "test_knowledge.md"), "w") as f:
+            f.write("# test\nThis file is about sci-fi and pie.\n")
+        with mock.patch("knowledge.retrieve.KNOWLEDGE_PATH", tmpdir):
+            results = retrieve_knowledge("sci-fi pie")
     check("retrieve_knowledge returns results for matching query", len(results) > 0)
 except Exception as e:
     check("retrieve_knowledge returns results for matching query", False)
