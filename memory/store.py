@@ -36,6 +36,14 @@ _INJECTION_PATTERNS = [
     re.compile(r"<\s*(system|assistant|user|inst)\s*>", re.IGNORECASE),
     re.compile(r"\[\s*(system|assistant|inst)\s*\]", re.IGNORECASE),
     re.compile(r"###\s*(instruction|system|prompt)", re.IGNORECASE),
+    # Dream-specific patterns
+    re.compile(r"user\s+said\s*:", re.IGNORECASE),
+    re.compile(r"nyx\s+responded\s*:", re.IGNORECASE),
+    re.compile(r"i\s+have\s+decided\s+to\s+(remember|forget|prioritize)", re.IGNORECASE),
+    re.compile(r"you\s+told\s+me\s+(that\s+)?(you|your|i)", re.IGNORECASE),
+    re.compile(r"my\s+new\s+(instructions?|goals?|purpose|directive)", re.IGNORECASE),
+    re.compile(r"^system\s*:", re.IGNORECASE | re.MULTILINE),
+    re.compile(r"override\s*:", re.IGNORECASE),
 ]
 
 
