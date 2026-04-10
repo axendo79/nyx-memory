@@ -74,4 +74,14 @@
 - Sanitizer hardened with 7 Dream-specific patterns (14 total), system: scoped to line-start
 - README updated — demo instructions, session log mention, new commands, sanitizer count
 
+## 2026-04-10 (Session 3) — Bug fixes from project analysis
+
+Top 5 concerns identified via full codebase audit. Four fixed this session:
+
+- `session_log.py` logs/ anchored to script location via `__file__`, not CWD — was silently writing logs to wrong directory when run from outside project root. Commit: `9d8c3e2`
+- `add_memory` gains `max_response_len` param (default 200, backward compatible) — watcher now passes 500 for file summaries, preventing silent truncation of LLM-generated content. Commit: `9d8c3e2`
+- `watcher.py` filelock added to `processed_files.json` — eliminates race condition when two inbox files arrive simultaneously. Lock held only during hash check and commit, not during LLM summarization. Commit: `c99b237`
+- `selftest.py` test 9 now uses temp dir + mock patch instead of live Knowledge directory — passes on clean clone, no local state dependency. Commit: `a32a8f5`
+- Deferred: `audit.py` O(n²) duplicate detection — not urgent at current memory scale.
+
 ---
