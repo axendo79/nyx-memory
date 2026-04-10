@@ -32,4 +32,21 @@
 - 11/11 selftest passing throughout.
 - Commits: `28e0d65`
 
+### Session 4 — `/why` silenced vs injected fix
+
+- `/why` previously labelled all retrieved memories as "injected" regardless of `INJECT_THRESHOLD`. Fixed.
+- Snapshot now captures `source` per memory alongside `score` and `text`.
+- `handle_why` splits on `INJECT_THRESHOLD` matching `build_prompt` logic exactly — injected and silenced displayed as separate sections.
+- Commits: `3785c26`
+
+### Session 5 — `session_log.py` and main.py wiring
+
+- New file `session_log.py` — per-session structured decision log, separate from `nyx_logger.py`.
+- Writes `logs/session_<timestamp>.json` on exit. Records retrieval, ingest, and dream events with timestamps.
+- `finalize()` derives summary automatically: `memories_added`, `memories_rejected`, `near_misses`, `consolidations`.
+- `log()` enforces `event` key — raises `ValueError` if missing. Schema is stable.
+- Wired into `main.py` with `try/finally` — log writes on clean exit, Ctrl+C, and uncaught exceptions.
+- `near_miss` field present in schema, always `False` until `store.py` surfaces dedup signals.
+- Commits: `0943bd4`
+
 ---
