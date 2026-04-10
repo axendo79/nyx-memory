@@ -17,6 +17,7 @@ import os
 import shutil
 import time
 from dotenv import load_dotenv
+from filelock import FileLock
 
 load_dotenv()
 
@@ -27,20 +28,22 @@ MEMORY_PATH = os.getenv(
 
 
 def load(path: str) -> list:
-    if not os.path.exists(path):
-        print(f"No memory file found at {path} — nothing to clean.")
-        return []
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    with FileLock(path + ".lock", timeout=10):
+        if not os.path.exists(path):
+            print(f"No memory file found at {path} — nothing to clean.")
+            return []
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
 
 
 def save(path: str, memories: list) -> None:
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    tmp = path + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(memories, f, indent=2, ensure_ascii=False)
-    json.loads(open(tmp, encoding="utf-8").read())  # validate
-    os.replace(tmp, path)
+    with FileLock(path + ".lock", timeout=10):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        tmp = path + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(memories, f, indent=2, ensure_ascii=False)
+        json.loads(open(tmp, encoding="utf-8").read())  # validate
+        os.replace(tmp, path)
 
 
 def dedup_memories(memories: list) -> list:
