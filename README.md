@@ -100,7 +100,7 @@ python main.py
 | `/debug all` | Dump all memories with scores |
 | `/dream` | Synthesize patterns from memory |
 | `/audit` | Check memory health and stats |
-| `/selftest` | Run built-in system validation |
+| `python selftest.py` | Run built-in system validation |
 | `python query_nyx.py "query"` | Standalone memory query (respects MIN_SCORE) |
 | `python query_nyx.py --all "query"` | Query including decayed memories |
 
@@ -125,19 +125,22 @@ back into future synthesis cycles.
 nyx/
 ├── main.py              # Main loop and command handling
 ├── clean_memory.py      # One-time memory cleanup and dedup
-├── selftest.py          # Built-in system validation
+├── selftest.py          # Built-in system validation (run directly)
 ├── watcher.py           # Inbox file watcher
-├── nyx_logger.py        # Logging
+├── nyx_logger.py        # Shared structured logger (used by all modules)
 ├── query_nyx.py         # Standalone memory query tool
 ├── llm/
+│   ├── __init__.py
 │   └── client.py        # LLM endpoint client
 ├── memory/
+│   ├── __init__.py
 │   ├── store.py         # Save/load/score/dedup memories
 │   ├── retrieve.py      # Keyword retrieval with scoring
 │   ├── decay.py         # Score decay and pruning
 │   ├── dream.py         # Dream Cycle synthesis
 │   └── audit.py         # Memory health checks
 ├── knowledge/
+│   ├── __init__.py
 │   └── retrieve.py      # Keyword retrieval over Knowledge/*.md files
 ├── data/
 │   └── memory.json      # Local memory storage (gitignored)

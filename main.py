@@ -17,6 +17,8 @@ load_dotenv()
 
 MEMORY_PATH = os.getenv("MEMORY_PATH", os.path.join(os.path.dirname(__file__), "data", "memory.json"))
 MIN_SCORE = float(os.getenv("MIN_SCORE", 0.3))
+DEBUG_MODE = False
+_last_why = None  # snapshot of last retrieval for /why
 
 
 def build_prompt(user_input: str, memories: list, knowledge: list = None) -> str:
@@ -32,6 +34,27 @@ def build_prompt(user_input: str, memories: list, knowledge: list = None) -> str
         parts.append(f"Relevant memory:\n{memory_block}")
     parts.append(f"User: {user_input}")
     return "\n\n".join(parts)
+
+
+def handle_why() -> None:
+    if _last_why is None:
+        print("\n[why] No retrieval yet — ask something first.\n")
+        return
+    print(f"\n[why] Last query: {_last_why['query']!r}")
+    memories = _last_why["memories"]
+    knowledge = _last_why["knowledge"]
+    if not memories and not knowledge:
+        print("  No memories or knowledge matched.\n")
+        return
+    if memories:
+        print(f"  Memories injected ({len(memories)}):")
+        for i, m in enumerate(memories, 1):
+            print(f"    {i}. [score: {m['score']:.2f}] {m['text'][:100]}")
+    if knowledge:
+        print(f"  Knowledge injected ({len(knowledge)}):")
+        for k in knowledge:
+            print(f"    - [{k['name']}]")
+    print()
 
 
 def handle_debug(query: str, memories: list) -> None:
@@ -53,6 +76,7 @@ def handle_debug(query: str, memories: list) -> None:
 
 
 def run():
+    global DEBUG_MODE, _last_why
     print("Nyx is running. Type 'exit' to quit, '/debug <query>' to inspect memory, '/dream' to synthesize.\n")
     memories = load_memories(MEMORY_PATH)
 
@@ -60,7 +84,8 @@ def run():
     memories = apply_decay(memories)
     if len(memories) != original_count:
         save_memories(MEMORY_PATH, memories)
-        print(f"[DECAY] pruned={original_count - len(memories)} remaining={len(memories)}")
+        if DEBUG_MODE:
+            print(f"[DECAY] pruned={original_count - len(memories)} remaining={len(memories)}")
 
     while True:
         user_input = input("You: ").strip()
@@ -69,6 +94,16 @@ def run():
         if user_input.lower() == "exit":
             print("Nyx stopped.")
             break
+
+        if user_input == "/debug on":
+            DEBUG_MODE = True
+            print("[debug] verbose mode on\n")
+            continue
+
+        if user_input == "/debug off":
+            DEBUG_MODE = False
+            print("[debug] verbose mode off\n")
+            continue
 
         if user_input.startswith("/debug "):
             handle_debug(user_input[7:].strip(), memories)
@@ -82,13 +117,24 @@ def run():
             run_audit(memories)
             continue
 
+        if user_input == "/why":
+            handle_why()
+            continue
+
         # Retrieve top 3 relevant memories above score threshold
         relevant = retrieve_relevant(user_input, memories, top_n=3, min_score=MIN_SCORE)
-        print(f"[RETRIEVE] found={len(relevant)} top_score={relevant[0]['score']:.2f}" if relevant else "[RETRIEVE] found=0")
+        if DEBUG_MODE:
+            print(f"[RETRIEVE] found={len(relevant)} top_score={relevant[0]['score']:.2f}" if relevant else "[RETRIEVE] found=0")
 
         # Build prompt with injected memory context
         knowledge = retrieve_knowledge(user_input)
-        print(f"[KNOWLEDGE] found={len(knowledge)}")
+        _last_why = {
+            "query": user_input,
+            "memories": [{"score": m["score"], "text": m["text"]} for m in relevant],
+            "knowledge": [{"name": k["name"]} for k in knowledge],
+        }
+        if DEBUG_MODE:
+            print(f"[KNOWLEDGE] found={len(knowledge)}")
         prompt = build_prompt(user_input, relevant, knowledge)
 
         # Query local LLM
@@ -98,14 +144,16 @@ def run():
         if not response.startswith("[Error"):
             for m in relevant:
                 boost_score(m)
-                print(f"[BOOST] score boosted to {m['score']:.2f}")
+                if DEBUG_MODE:
+                    print(f"[BOOST] score boosted to {m['score']:.2f}")
 
         # Store this exchange as a new memory
         memories = add_memory(memories, user_input, response)
         original_count_loop = len(memories)
         memories = apply_decay(memories)
         if len(memories) != original_count_loop:
-            print(f"[DECAY] pruned={original_count_loop - len(memories)} remaining={len(memories)}")
+            if DEBUG_MODE:
+                print(f"[DECAY] pruned={original_count_loop - len(memories)} remaining={len(memories)}")
         save_memories(MEMORY_PATH, memories)
 
 
