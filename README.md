@@ -195,8 +195,9 @@ Each memory entry:
 
 ## Roadmap
 
+> Last updated: 2026-04-10 — actively developed
+
 - **Improved retrieval** — content-aware matching beyond keyword overlap
-- **Faster dream decay** — dream entries should fade unless reinforced
 - **Tunable decay** — per-entry decay controls via `.env`
 - **Personality emergence** — let reinforced patterns shape response style
 - **Knowledge management** — commands to list, remove, or inspect knowledge files
