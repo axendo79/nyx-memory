@@ -18,10 +18,12 @@ local LLM to build continuity across conversations without storing everything.
 - Cross-process file locking on all memory reads/writes
 - Decay and retrieval thresholds unified via `MIN_SCORE` env — no zombie entries
 - Boost only fires after confirmed LLM success — failed exchanges don't reinforce memory
-- Console observability — `[RETRIEVE]`, `[BOOST]`, `[DECAY]`, `[KNOWLEDGE]` events visible in real time
+- Console observability — `[RETRIEVE]`, `[BOOST]`, `[DECAY]`, `[KNOWLEDGE]` events gated behind `/debug on`
 - Prompt discipline — system prompt tuned for concise, direct output
+- Per-session structured JSON log written to `logs/session_<timestamp>.json` on exit
+- 14-pattern sanitizer on all write paths including Dream output
 - 11/11 selftest passing
-- Built-in tools: `/debug`, `/audit`, `/dream`, `selftest.py`, `query_nyx.py --all`
+- Built-in tools: `/debug`, `/debug on|off`, `/why`, `/audit`, `/dream`, `selftest.py`, `query_nyx.py --all`, `demo.py`
 
 Actively being developed and tested with real usage.
 
@@ -96,11 +98,15 @@ python main.py
 
 | Command | Description |
 |---|---|
+| `/debug on` | Enable verbose mode — show `[RETRIEVE]`, `[BOOST]`, `[DECAY]`, `[KNOWLEDGE]` |
+| `/debug off` | Disable verbose mode (default) |
 | `/debug <query>` | Show top matching memories for a query |
 | `/debug all` | Dump all memories with scores |
+| `/why` | Show what was injected and silenced on the last turn |
 | `/dream` | Synthesize patterns from memory |
 | `/audit` | Check memory health and stats |
 | `python selftest.py` | Run built-in system validation |
+| `python demo.py` | Scripted baseline vs naive vs Nyx comparison |
 | `python query_nyx.py "query"` | Standalone memory query (respects MIN_SCORE) |
 | `python query_nyx.py --all "query"` | Query including decayed memories |
 
@@ -124,6 +130,8 @@ back into future synthesis cycles.
 ```
 nyx/
 ├── main.py              # Main loop and command handling
+├── session_log.py       # Per-session decision log (writes logs/session_<ts>.json)
+├── demo.py              # Scripted baseline vs naive vs Nyx comparison
 ├── clean_memory.py      # One-time memory cleanup and dedup
 ├── selftest.py          # Built-in system validation (run directly)
 ├── watcher.py           # Inbox file watcher
@@ -179,7 +187,9 @@ Each memory entry:
 
 - `.env` is gitignored — never commit secrets
 - `data/memory.json` is gitignored — memory stays local
+- `logs/` is gitignored — session logs stay local
 - LM Studio endpoint is localhost only — never expose externally
+- 14-pattern sanitizer strips prompt injection and Dream format mimicry from all write paths
 
 ---
 
