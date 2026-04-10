@@ -57,14 +57,20 @@ def handle_why() -> None:
         print("\n[why] No retrieval yet — ask something first.\n")
         return
     print(f"\n[why] Last query: {_last_why['query']!r}")
-    memories = _last_why["memories"]
+    all_memories = _last_why["memories"]
     knowledge = _last_why["knowledge"]
-    if not memories and not knowledge:
+    injected = [m for m in all_memories if m["score"] >= INJECT_THRESHOLD]
+    silenced = [m for m in all_memories if m["score"] < INJECT_THRESHOLD]
+    if not injected and not silenced and not knowledge:
         print("  No memories or knowledge matched.\n")
         return
-    if memories:
-        print(f"  Memories injected ({len(memories)}):")
-        for i, m in enumerate(memories, 1):
+    if injected:
+        print(f"  Memories injected ({len(injected)}):")
+        for i, m in enumerate(injected, 1):
+            print(f"    {i}. [score: {m['score']:.2f}] {m['text'][:100]}")
+    if silenced:
+        print(f"  Memories silenced — below threshold ({len(silenced)}):")
+        for i, m in enumerate(silenced, 1):
             print(f"    {i}. [score: {m['score']:.2f}] {m['text'][:100]}")
     if knowledge:
         print(f"  Knowledge injected ({len(knowledge)}):")
@@ -146,7 +152,7 @@ def run():
         knowledge = retrieve_knowledge(user_input)
         _last_why = {
             "query": user_input,
-            "memories": [{"score": m["score"], "text": m["text"]} for m in relevant],
+            "memories": [{"score": m["score"], "text": m["text"], "source": m.get("source", "")} for m in relevant],
             "knowledge": [{"name": k["name"]} for k in knowledge],
         }
         if DEBUG_MODE:
