@@ -49,4 +49,21 @@
 - `near_miss` field present in schema, always `False` until `store.py` surfaces dedup signals.
 - Commits: `0943bd4`
 
+### Session 6 — `demo.py` scripted comparison
+
+- New file `demo.py` — scripted walkthrough, no user input required.
+- Three modes: baseline (no memory), naive (store everything, no decay), Nyx (full system).
+- Six hardcoded scenarios: two preferences, unrelated query, two recall turns, noise injection.
+- Shows injection counts per mode per turn. `[filter]` noise suppressed via `redirect_stdout`.
+- Demonstrates the gap: baseline can't recall, naive injects noise, Nyx recalls cleanly.
+- Commits: `d0bdb96`
+
+### Session 7 — Sanitizer hardening and README cleanup
+
+- 7 Dream-specific patterns added to `_INJECTION_PATTERNS` in `store.py` (14 total).
+- New patterns cover: format mimicry (`User said:`, `Nyx responded:`), self-directed rewrites, fabricated user statements, directive injection, header patterns.
+- `system:` scoped to line-start only (`re.MULTILINE`) to avoid false positives on benign mid-sentence use.
+- README updated: commands table expanded (`/debug on|off`, `/why`, `demo.py`), `session_log.py` and `demo.py` added to project structure, session log and sanitizer count added to Current Status and Security sections.
+- Commits: `0f836c7`, `7d3b71f`
+
 ---
