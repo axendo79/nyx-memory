@@ -128,7 +128,7 @@ def _save_unlocked(path: str, memories: List[Dict]) -> None:
         raise
 
 
-def add_memory(memories: List[Dict], user_input: str, response: str) -> List[Dict]:
+def add_memory(memories: List[Dict], user_input: str, response: str, max_response_len: int = 200) -> List[Dict]:
     """
     Add a new memory entry. Sanitizes both input and response before storing.
     Score starts at 1.0 and decays over time if not retrieved.
@@ -158,7 +158,7 @@ def add_memory(memories: List[Dict], user_input: str, response: str) -> List[Dic
         return memories
 
     clean_input = sanitize(user_input)
-    clean_response = sanitize(response[:200])
+    clean_response = sanitize(response[:max_response_len])
     entry = {
         "text": f"User said: {clean_input} | Nyx responded: {clean_response}",
         "score": 1.0,

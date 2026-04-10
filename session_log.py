@@ -14,9 +14,10 @@ import time
 
 class SessionLog:
     def __init__(self):
-        os.makedirs("logs", exist_ok=True)
+        _logs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
+        os.makedirs(_logs_dir, exist_ok=True)
         self._started = int(time.time())
-        self._path = os.path.join("logs", f"session_{self._started}.json")
+        self._path = os.path.join(_logs_dir, f"session_{self._started}.json")
         self._events = []
 
     def log(self, **kwargs) -> None:

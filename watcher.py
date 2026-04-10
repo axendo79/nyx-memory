@@ -118,7 +118,7 @@ def summarize_and_store(filepath: str) -> None:
     log.info("ingest event=summarized path=%s summary_len=%d", filename, len(summary))
 
     memories = load_memories(MEMORY_PATH)
-    memories = add_memory(memories, f"[Inbox file: {filename}]", summary)
+    memories = add_memory(memories, f"[Inbox file: {filename}]", summary, max_response_len=500)
     memories = apply_decay(memories)
     save_memories(MEMORY_PATH, memories)
     console.info("Stored in memory.")
