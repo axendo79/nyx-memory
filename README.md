@@ -1,3 +1,15 @@
+# ⚠️ ARCHIVED — Development continues at [nyx-core-v2](link when ready)
+
+This repository represents Nyx v1 — the proof-of-concept build that 
+validated the core architecture. It is preserved as a reference and 
+historical record.
+
+**Do not use this for new work.** The v2 rebuild addresses stability, 
+atomicity, and integrity issues identified during v1 development.
+
+Status: Parked as of April 30, 2026
+
+
 # Nyx
 
 Nyx is a local-first AI memory system for persistent context.
